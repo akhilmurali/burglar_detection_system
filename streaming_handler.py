@@ -1,6 +1,8 @@
 from datetime import time
+from typing import Collection
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext, dstream
+import statistics
 
 DOPPLER_MEAN_FREQUENCY = 120
 DOPPLER_VARIANCE = 40
@@ -25,10 +27,16 @@ class PressureSensor(object):
         self.region_id = region_id
         self.value = value
 
-def perform_bayseian_cleaning(value, microwave_data_array):
-    print(value)
-    print(microwave_data_array)
-    return value
+def perform_bayseian_cleaning(sensor_data_rdd):
+    # calculate the mean of past 5 values in the time window
+    # Now look at the mean and variance of the noise. 
+    # On that basis see if the value can be in the valid range.
+    # If yes then return the value as is
+    # else assign the mean value to that value
+    list_of_values = []
+    for item in sensor_data_rdd:
+        list_of_values.append(item)
+    return statistics.mean(list_of_values)
 
 
 def transform_To_MS(line):
@@ -43,7 +51,9 @@ if __name__ == "__main__":
     ds_microwave_sensor = ssc.socketTextStream('localhost', 12000)
     #ds_pressure_sensor = ssc.socketTextStream('localhost', 12001)
     ds_microwave_sensor = ds_microwave_sensor.map(lambda l: transform_To_MS(l))
+    #ds_microwave_sensor.map(lambda data: data.value).flatMap(lambda rdd: perform_bayseian_cleaning(rdd))
     ds_microwave_sensor.pprint()
+    #ds_microwave_sensor = ds_microwave_sensor.map(lambda sensorData: perform_bayseian_cleaning(sensorData, sensor_array_value))
     #pressure_data = ds_pressure_sensor.map(lambda l: l.split(",")[1])
     #pressure_data.pprint()
     #combined_stream = microwave_data.join(pressure_data)
@@ -75,3 +85,5 @@ if __name__ == "__main__":
 
 # The spark context object tells spark how to access a cluster.
 # The app name is the name to show on the UI.
+
+# RDDs cannot hold complex data objects
