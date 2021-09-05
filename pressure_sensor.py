@@ -1,7 +1,7 @@
 """
 
 OUTPUT FORMAT:
-<time>,<device-id>,<region>,<doppler-frequency-value>
+<time>,<device-id>,<region>,<pressure-value>
 
 """
 
@@ -11,18 +11,18 @@ import time
 import random
 from datetime import datetime
 
-MEAN_FREQENCY = 120
-VARIANCE = 40
+MEAN_WEIGHT = 75
+VARIANCE = 20
 if len(sys.argv) < 5:
-    print("Format: <host> <port> <device-id> <region> [<doppler-frequency-mean>] [<doppler-frequency-std>]", sys.argv[0])
+    print("Format: <host> <port> <device-id> <region> [<pressure-mean>] [<pressure-std>]", sys.argv[0])
     exit(-1)
 
 HOST = sys.argv[1]
 PORT = int(sys.argv[2])
 DEVICE_ID = sys.argv[3]
 REGION = sys.argv[4]
-DOPPLER_MEAN = sys.argv[5] if len(sys.argv) >= 6 else MEAN_FREQENCY
-DOPPLER_STD = sys.argv[6] if len(sys.argv) >= 7 else VARIANCE
+MEAN_WEIGHT = sys.argv[5] if len(sys.argv) >= 6 else MEAN_WEIGHT
+WEIGHT_VARIANCE = sys.argv[6] if len(sys.argv) >= 7 else VARIANCE
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -34,8 +34,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         with conn:
             while True:
                 try:
-                    doppler_frequency = random.gauss(DOPPLER_MEAN, DOPPLER_STD)
-                    data = "{},{},{},{:.2f}".format(int(time.time()) * 1000, DEVICE_ID, REGION, doppler_frequency)
+                    weight_measured = random.gauss(MEAN_WEIGHT, WEIGHT_VARIANCE)
+                    data = "{},{},{},{:.2f}".format(int(time.time()) * 1000, DEVICE_ID, REGION, weight_measured)
                     print(data+"\n")
                     conn.sendall("{}\n".format(data).encode('utf-8'))
                     time.sleep(1)
