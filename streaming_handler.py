@@ -3,6 +3,9 @@ from typing import Collection
 from pyspark import SparkContext
 from pyspark.streaming import StreamingContext, dstream
 import statistics
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import explode
+from pyspark.sql.functions import split
 
 DOPPLER_MEAN_FREQUENCY = 120
 DOPPLER_VARIANCE = 40
@@ -12,20 +15,6 @@ DOPLLER_NOISE_FREQUNECY_VARIANCE = 0
 confidence_interval = 0.01
 WINDOW_DURATION = 5
 MIN_READINGS = 3
-
-class MicrowaveSensor(object):
-    def __init__(self, time, device_id, region_id, value) -> None:
-        self.time = time
-        self.device_id = device_id
-        self.region_id = region_id
-        self.value = value
-
-class PressureSensor(object):
-    def __init__(self, time, device_id, region_id, value) -> None:
-        self.time = time
-        self.device_id = device_id
-        self.region_id = region_id
-        self.value = value
 
 def perform_bayseian_cleaning(sensor_data_rdd):
     # calculate the mean of past 5 values in the time window
@@ -39,29 +28,39 @@ def perform_bayseian_cleaning(sensor_data_rdd):
     return statistics.mean(list_of_values)
 
 
-def transform_To_MS(line):
-    arr = line.split(",")
-    sensor = MicrowaveSensor(arr[0], arr[1], arr[2], arr[3])
-    return sensor.value
+def check_float(data):
+    try:
+        float(data)
+        return True
+    except ValueError:
+        return False
 
 if __name__ == "__main__":
     spark_context = SparkContext(appName="BDSStream")
     ssc = StreamingContext(spark_context, WINDOW_DURATION) 
-    # As we are staggering the output by 1 we will be able to consolidate the result only every 30 seconds.
+    # # As we are staggering the output by 1 we will be able to consolidate the result only every 30 seconds.
     ds_microwave_sensor = ssc.socketTextStream('localhost', 12000)
-    #ds_pressure_sensor = ssc.socketTextStream('localhost', 12001)
-    ds_microwave_sensor = ds_microwave_sensor.map(lambda l: transform_To_MS(l))
-    #ds_microwave_sensor.map(lambda data: data.value).flatMap(lambda rdd: perform_bayseian_cleaning(rdd))
     ds_microwave_sensor.pprint()
+    ds_pressure_sensor = ssc.socketTextStream('localhost', 12001)
+    ds_microwave_sensor = ds_microwave_sensor.map(lambda l: tuple(l.split(",")))
+    ds_microwave_sensor.pprint()
+    ds_microwave_sensor = ds_microwave_sensor.filter(lambda l: check_float(l[3])) # filter out the values that are null or empty
+    ds_pressure_sensor = ds_pressure_sensor.map(lambda l: tuple(l.split(",")))
+    ds_pressure_sensor.pprint()
+    ds_pressure_sensor = ds_pressure_sensor.filter(lambda l: check_float(l[3]))
+    combined_stream = ds_pressure_sensor.union(ds_microwave_sensor)
+    combined_stream.pprint()
+    #ds_microwave_sensor.map(lambda data: data.value).flatMap(lambda rdd: perform_bayseian_cleaning(rdd))
     #ds_microwave_sensor = ds_microwave_sensor.map(lambda sensorData: perform_bayseian_cleaning(sensorData, sensor_array_value))
     #pressure_data = ds_pressure_sensor.map(lambda l: l.split(",")[1])
     #pressure_data.pprint()
     #combined_stream = microwave_data.join(pressure_data)
 
-    #combined_stream.pprint()
-    # The data object that is returned is a new RDD which is an array maybe?
+    # #combined_stream.pprint()
+    # # The data object that is returned is a new RDD which is an array maybe?
     ssc.start() # Starts the streaming serivce.
     ssc.awaitTermination() # API that awaits manual termination.
+    ###############################################################
 
 # What set of data is present in an RDD? How can we group data in a time window together?
 # How can we batch elements into a single RDD?
@@ -87,3 +86,11 @@ if __name__ == "__main__":
 # The app name is the name to show on the UI.
 
 # RDDs cannot hold complex data objects
+
+# What is it that I want to achive?
+# Convert the input data stream into a tuple set.
+# Then apply bayseian filtering on the data that is obtained.
+# do this thing for all the three streams of data
+# Finally use the data in a single frame of data to make a prediction i,e make a prediction about weather a burglar has 
+# come in or not. This could become the descriptive analytics?
+# Then omit one sensor data and predict the possibility of a breakin. This could be the predictive analytics.
