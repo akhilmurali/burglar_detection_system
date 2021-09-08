@@ -47,7 +47,7 @@ if __name__ == "__main__":
     ds_microwave_sensor = ds_microwave_sensor.filter(lambda l: check_float(l[3])) # filter out the values that are null or empty
     ds_pressure_sensor = ds_pressure_sensor.map(lambda l: tuple(l.split(",")))
     ds_pressure_sensor.pprint()
-    ds_pressure_sensor = ds_pressure_sensor.filter(lambda l: check_float(l[3]))
+    ds_pressure_sensor = ds_pressure_sensor.filter(lambda l: check_float(l[3])) # filter out the values that are null or empty
     combined_stream = ds_pressure_sensor.union(ds_microwave_sensor)
     combined_stream.pprint()
     #ds_microwave_sensor.map(lambda data: data.value).flatMap(lambda rdd: perform_bayseian_cleaning(rdd))
