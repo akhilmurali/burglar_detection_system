@@ -16,7 +16,6 @@ fields = partial(
     regexp_extract, str="value", pattern="^([0-9]*),(\w*),(\w*),([-+]?[0-9]*\.?[0-9]+),(\w*),(\w*),([-+]?[0-9]*\.?[0-9]+),(\w*),(\w*),([0-9]*)$"
 )
 # reference: https://stackoverflow.com/questions/41378447/spark-structured-streaming-using-sockets-set-schema-display-dataframe-in-conso
-pattern = "^([0-9]*)\s*,\s*(\w*)\s*,\s*(\w*)\s*,\s*([+-]?([0-9]*[.])?[0-9]*)\s*,\s*(\w*)\s*,\s*(\w*)\s*,\s*([+-]?([0-9]*[.])?[0-9]*)\s*,\s*(\w*)\s*,\s*(\w*)\s*,([0-9]*)$"
 sensor_feed_DF = spark \
     .readStream \
     .format("socket") \

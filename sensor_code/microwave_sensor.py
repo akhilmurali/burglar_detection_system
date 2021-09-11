@@ -22,7 +22,7 @@ PORT = int(sys.argv[2])
 DEVICE_ID = sys.argv[3]
 REGION = sys.argv[4]
 DOPPLER_MEAN = sys.argv[5] if len(sys.argv) >= 6 else MEAN_FREQENCY
-DOPPLER_STD = sys.argv[6] if len(sys.argv) >= 7 else VARIANCE
+DOPPLER_VAR = sys.argv[6] if len(sys.argv) >= 7 else VARIANCE
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
     s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -34,7 +34,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         with conn:
             while True:
                 try:
-                    doppler_frequency = random.gauss(DOPPLER_MEAN, DOPPLER_STD)
+                    doppler_frequency = random.gauss(DOPPLER_MEAN, DOPPLER_VAR)
                     data = "{},{},{},{:.2f}".format(int(time.time()) * 1000, DEVICE_ID, REGION, doppler_frequency)
                     print(data+"\n")
                     conn.sendall("{}\n".format(data).encode('utf-8'))
