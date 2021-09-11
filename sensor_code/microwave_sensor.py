@@ -14,7 +14,7 @@ from datetime import datetime
 MEAN_FREQENCY = 120
 VARIANCE = 40
 if len(sys.argv) < 5:
-    print("Format: <host> <port> <device-id> <region> [<doppler-frequency-mean>] [<doppler-frequency-std>]", sys.argv[0])
+    print("Format: <host> <port> <device-id> <region> [<doppler-frequency-mean>] [<doppler-frequency-std>] [<pressure-mean>] [pressure-std]", sys.argv[0])
     exit(-1)
 
 HOST = sys.argv[1]
@@ -38,7 +38,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     data = "{},{},{},{:.2f}".format(int(time.time()) * 1000, DEVICE_ID, REGION, doppler_frequency)
                     print(data+"\n")
                     conn.sendall("{}\n".format(data).encode('utf-8'))
-                    time.sleep(1)
+                    time.sleep(0.1)
                 except Exception as e:
                     print(e)
                     break
